@@ -1,0 +1,38 @@
+# .github/workflows/validate-jira-ticket.yml
+name: Validate JIRA Ticket
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+jobs:
+  validate-jira:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for JIRA ticket in PR title
+        run: |
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          BRANCH_NAME="${{ github.event.pull_request.head.ref }}"
+          
+          # Regex pattern for JIRA tickets (e.g., ABC-123, DEV-456)
+          JIRA_PATTERN="[A-Z]{2,10}-[0-9]+"
+          
+          echo "PR Title: $PR_TITLE"
+          echo "Branch: $BRANCH_NAME"
+          
+          # Check PR title first
+          if echo "$PR_TITLE" | grep -qE "$JIRA_PATTERN"; then
+            echo "✅ JIRA ticket found in PR title"
+            exit 0
+          fi
+          
+          # Check branch name as fallback
+          if echo "$BRANCH_NAME" | grep -qE "$JIRA_PATTERN"; then
+            echo "✅ JIRA ticket found in branch name"
+            exit 0
+          fi
+          
+          # No JIRA ticket found
+          echo "❌ No JIRA ticket found in PR title or branch name"
+          echo "Please include a JIRA ticket number (e.g., ABC-123) in your PR title or branch name"
+          exit 1
